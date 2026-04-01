@@ -1,0 +1,17 @@
+[project]
+name = "translate-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mcp[cli]>=1.26.0",
+    "openai>=2.30.0",
+    "python-dotenv>=1.2.2",
+]
+
+[project.scripts]
+translate = "translate:main"
+
+[tool.uv]
+package = true
