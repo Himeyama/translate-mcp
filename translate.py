@@ -34,8 +34,7 @@ def translate_content(text: str, from_lang: str, to_lang: str, model: str, debug
                 "content": f"You are a professional translator. Translate from {from_lang} to {to_lang}. Output only the translated text."
             },
             {"role": "user", "content": text}
-        ],
-        temperature=0.3
+        ]
     )
     return response.choices[0].message.content.strip()
 
