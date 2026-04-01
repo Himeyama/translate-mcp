@@ -65,6 +65,12 @@ def translate_file(path: str, from_lang: str, to_lang: str) -> str:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
 def main():
+    # Set stdout and stderr to use UTF-8 encoding to handle non-ASCII characters on Windows
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+    
     parser = argparse.ArgumentParser(description="Translation CLI and MCP Server")
     parser.add_argument("--mcp", action="store_true", help="Run as an MCP server")
     parser.add_argument("--input", help="Input file path (ignored in MCP mode)")
