@@ -45,6 +45,7 @@ def main():
     parser = argparse.ArgumentParser(description="Translation CLI and MCP Server")
     parser.add_argument("--mcp", action="store_true", help="Run as an MCP server")
     parser.add_argument("--input", help="Input file path")
+    parser.add_argument("--output", help="Output file path (optional)")
     parser.add_argument("--from", dest="from_lang", help="Source language")
     parser.add_argument("--to", dest="to_lang", help="Target language")
     parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model to use (default: gpt-4o-mini)")
@@ -58,11 +59,19 @@ def main():
         mcp = FastMCP("TranslateServer")
 
         @mcp.tool()
-        def translate_file(path: str, from_lang: str, to_lang: str, model: str = "gpt-4o-mini", debug: bool = False) -> str:
+        def translate_file(path: str, from_lang: str, to_lang: str, output_path: Optional[str] = None, model: str = "gpt-4o-mini", debug: bool = False) -> str:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
-                return translate_content(content, from_lang, to_lang, model, debug)
+                
+                result = translate_content(content, from_lang, to_lang, model, debug)
+                
+                if output_path:
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        f.write(result)
+                    return f"Successfully translated and saved to {output_path}"
+                
+                return result
             except Exception as e:
                 return json.dumps({"error": str(e)}, ensure_ascii=False)
 
@@ -84,7 +93,14 @@ def main():
 
             # 翻訳実行
             result = translate_content(content, args.from_lang, args.to_lang, args.model, args.debug)
-            print(result)
+            
+            # 出力先（ファイル or 標準出力）の切り替え
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(result)
+                print(f"Success: Translated content saved to {args.output}")
+            else:
+                print(result)
             
         except Exception as e:
             print(f"Error: {str(e)}", file=sys.stderr)
