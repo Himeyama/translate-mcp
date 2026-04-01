@@ -2,21 +2,29 @@ import os
 import sys
 import argparse
 import json
+import logging
 from typing import Optional
 
-def get_openai_client():
-    """必要な時だけインポートしてクライアントを返す"""
+def get_openai_client(debug: bool = False):
+    """必要な時だけインポート。debug=TrueならログレベルをDEBUGに設定"""
     from openai import OpenAI
     from dotenv import load_dotenv
     load_dotenv()
+    
+    if debug:
+        # openaiライブラリのログを有効化
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger("openai").setLevel(logging.DEBUG)
+        logging.getLogger("httpx").setLevel(logging.DEBUG)
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY is not set.")
     return OpenAI(api_key=api_key)
 
-def translate_content(text: str, from_lang: str, to_lang: str, model: str) -> str:
-    """OpenAIを使用して一括で翻訳を行う"""
-    client = get_openai_client()
+def translate_content(text: str, from_lang: str, to_lang: str, model: str, debug: bool = False) -> str:
+    """OpenAIを使用して翻訳を行う"""
+    client = get_openai_client(debug=debug)
     
     response = client.chat.completions.create(
         model=model,
@@ -32,7 +40,6 @@ def translate_content(text: str, from_lang: str, to_lang: str, model: str) -> st
     return response.choices[0].message.content.strip()
 
 def main():
-    # エンコーディング設定（Windows対策）
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
 
@@ -42,6 +49,7 @@ def main():
     parser.add_argument("--from", dest="from_lang", help="Source language")
     parser.add_argument("--to", dest="to_lang", help="Target language")
     parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model to use (default: gpt-4o-mini)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging for API communication")
 
     args = parser.parse_args()
 
@@ -51,11 +59,11 @@ def main():
         mcp = FastMCP("TranslateServer")
 
         @mcp.tool()
-        def translate_file(path: str, from_lang: str, to_lang: str, model: str = "gpt-4o-mini") -> str:
+        def translate_file(path: str, from_lang: str, to_lang: str, model: str = "gpt-4o-mini", debug: bool = False) -> str:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
-                return translate_content(content, from_lang, to_lang, model)
+                return translate_content(content, from_lang, to_lang, model, debug)
             except Exception as e:
                 return json.dumps({"error": str(e)}, ensure_ascii=False)
 
@@ -63,7 +71,6 @@ def main():
 
     # --- CLI Mode ---
     else:
-        # CLIモードで必須の引数チェック
         if not all([args.input, args.from_lang, args.to_lang]):
             parser.print_help()
             sys.exit(1)
@@ -77,7 +84,7 @@ def main():
                 content = f.read()
 
             # 翻訳実行
-            result = translate_content(content, args.from_lang, args.to_lang, args.model)
+            result = translate_content(content, args.from_lang, args.to_lang, args.model, args.debug)
             print(result)
             
         except Exception as e:
