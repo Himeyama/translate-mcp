@@ -2,7 +2,22 @@
 
 A translation CLI and MCP (Model Context Protocol) server using OpenAI.
 
-## Setup
+## Quick Start with uvx
+
+You can run this tool directly from GitHub without manual installation:
+
+```bash
+# Set your API key first
+export OPENAI_API_KEY=your_openai_api_key_here
+
+# CLI Mode
+uvx --from git+https://github.com/Himeyama/translate-mcp translate --input test.txt --from English --to Japanese
+
+# MCP Mode
+uvx --from git+https://github.com/Himeyama/translate-mcp translate --mcp
+```
+
+## Setup (Local Development)
 
 1. Install [uv](https://github.com/astral-sh/uv).
 2. Create a `.env` file from `.env.example` and set your `OPENAI_API_KEY`.
